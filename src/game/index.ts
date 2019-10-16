@@ -29,7 +29,9 @@ export class GameLobby extends Lobby<ILobbyState, IPlayerState> {
     const lState = this.getLobbyState();
     const pState = this.getPlayerState(player);
 
-    this.command(player, "lobby.state", lState.modify(s => s).apply());
+    const scores = this.players.map(p => [p.id, this.getPlayerState(p).data.score]);
+
+    this.command(player, "lobby.state", { ...lState.modify(s => s).apply(), result: { scores } });
     this.command(player, "player.state", pState.modify(s => s).apply());
   }
 

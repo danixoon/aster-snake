@@ -41,7 +41,7 @@ const reducer: Reducer<ILobbyState, IAction> = function(state = initalState(), {
     case "PLAYER_STATE":
       return { ...state, ...payload };
     case "LOBBY_STATE":
-      return { ...state, ...payload };
+      return { ...state, state: payload.state, players: state.players.map(p => ({ ...p, score: payload.result.scores.find(([id, score]: any) => id === p.id)[1] })) };
     case "LOBBY_JOINED":
       return state.playerId === null || payload.playerId === state.playerId
         ? { ...state, players: payload.playerIds.map((id: string) => createPlayer(id)), lobbyId: payload.lobbyId }
