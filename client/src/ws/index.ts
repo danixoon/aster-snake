@@ -6,6 +6,7 @@ import { EventEmitter } from "events";
 import { ThunkDispatch } from "redux-thunk";
 import { setPage } from "../actions/appActions";
 import store from "../store";
+import { setPos } from "../actions/gameActions";
 
 export interface ISocketArgument {
   socket: SocketIOClient.Socket;
@@ -62,6 +63,10 @@ export const init = (dispatch: ThunkDispatch<IRootState, any, IAction>, username
 
   server.on("game.addScore", payload => {
     dispatch({ type: "GAME_ADD_SCORE", payload });
+  });
+
+  server.on("game.pos", payload => {
+    dispatch(setPos(payload.xy));
   });
 
   server.on("game.over", payload => {

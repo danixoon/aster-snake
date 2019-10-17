@@ -6,11 +6,13 @@ export interface IGameState {
   result: {
     score: 0;
   };
+  xy: [number, number];
 }
 
 const initalState: () => IGameState = () => ({
   state: "lobby",
-  result: { score: 0 }
+  result: { score: 0 },
+  xy: [0, 0]
 });
 
 const reducer: Reducer<IGameState, IAction> = function(state = initalState(), { type, payload }: IAction) {
@@ -19,6 +21,8 @@ const reducer: Reducer<IGameState, IAction> = function(state = initalState(), { 
       return { ...state, ...payload };
     case "GAME_ADD_SCORE":
       return { ...state, result: { ...state.result, score: payload.score } };
+    case "GAME_POS":
+      return { ...state, xy: payload };
     case "APP_PAGE":
       if (payload.page === "lobby") return initalState();
       else return state;

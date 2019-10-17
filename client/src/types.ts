@@ -23,4 +23,5 @@ export type ActionType =
   | "GAME_START"
   | "GAME_OVER"
   | "GAME_ADD_SCORE"
+  | "GAME_POS"
   | "APP_PAGE";
