@@ -1,5 +1,7 @@
 import { Lobby, Player } from "astra-engine";
 import { EventEmitter } from "events";
+import { fromXYToIndex } from "./utils";
+import { clearInterval } from "timers";
 
 interface IPlayerState {
   ready: boolean;
@@ -11,17 +13,21 @@ interface IPlayerState {
 interface ILobbyState {
   maxPlayers: number;
   state: ILobbyStateType;
+  width: number;
+  height: number;
 }
 
 type ILobbyStateType = "game" | "lobby";
 
 export class GameLobby extends Lobby<ILobbyState, IPlayerState> {
   private emitter = new EventEmitter();
-  maxPlayers = 1;
+  maxPlayers = 2;
   createLobbyState = () =>
     ({
       maxPlayers: this.maxPlayers,
-      state: "lobby"
+      state: "lobby",
+      height: 20,
+      width: 20
     } as ILobbyState);
   createPlayerState = () =>
     ({
@@ -50,9 +56,15 @@ export class GameLobby extends Lobby<ILobbyState, IPlayerState> {
     return this.players.find(p => !this.getPlayerState(p).data.ready) === undefined;
   }
 
+  tickTimer: NodeJS.Timeout;
+
+  onDisposed() {
+    clearInterval(this.tickTimer);
+  }
+
   onInit() {
     const gameOver = () => {
-      clearInterval(tickTimer);
+      clearInterval(this.tickTimer);
 
       const lState = this.getLobbyState()
         .modify(s => ({ state: "lobby" }))
@@ -64,8 +76,6 @@ export class GameLobby extends Lobby<ILobbyState, IPlayerState> {
         this.command(p, "game.over", { ...lState, result: { scores } });
       });
     };
-
-    let tickTimer: NodeJS.Timeout;
 
     const addDir = ([x, y]: [number, number], dir: 0 | 1 | 2 | 3, add: number = 1): [number, number] => {
       switch (dir) {
@@ -80,33 +90,35 @@ export class GameLobby extends Lobby<ILobbyState, IPlayerState> {
       }
     };
 
-    const repeatXY = ([x, y]: [number, number], width: number = 10, height: number = 10): [number, number] => {
-      if(x < 0) x = width - 1;
-      if(y < 0) y = height - 1;
+    const repeatXY = ([x, y]: [number, number], width: number, height: number): [number, number] => {
+      if (x < 0) x = width - 1;
+      if (y < 0) y = height - 1;
       return [x % width, y % height];
     };
 
     const onTick = () => {
+      const ls = this.getLobbyState();
+      const data = [];
       this.mapPlayerState((p, s) => {
-        const c = s.modify(s => ({ xy: repeatXY(addDir(s.xy, s.dir)) })).apply();
-        this.command(p, "game.pos", c);
+        const c = s.modify(s => ({ xy: repeatXY(addDir(s.xy, s.dir), ls.data.width, ls.data.height) })).apply();
+        data.push([p.id, fromXYToIndex(c.xy[0], c.xy[1], ls.data.width)]);
       });
+      this.broadcast(this, "game.pos", data);
     };
 
     const gameStart = () => {
       this.emitter.off("player.ready", onReady);
       this.emitter.on("game.addScore", onAddScore);
       this.emitter.on("game.direction", onChangeDirection);
-      const lState = this.getLobbyState()
-        .modify(s => ({ state: "game" }))
-        .apply();
+      const lState = this.getLobbyState();
+      const c = lState.modify(s => ({ state: "game" })).apply();
 
       this.mapPlayerState((p, s) => {
-        this.broadcast(this, "game.start", lState);
+        this.broadcast(this, "game.start", { ...c, height: lState.data.height, width: lState.data.width });
         this.command(p, "player.state", s.modify(s => ({ ready: false })).apply());
       });
 
-      tickTimer = setInterval(onTick, 100);
+      this.tickTimer = setInterval(onTick, 70);
 
       // setTimeout(() => {
       //   gameOver();
@@ -118,6 +130,9 @@ export class GameLobby extends Lobby<ILobbyState, IPlayerState> {
       if (![0, 1, 2, 3].includes(dir)) throw "invalid direction";
 
       const s = this.getPlayerState(player);
+
+      if (Math.abs(dir - s.data.dir) === 2) return;
+
       const c = s.modify(s => ({ dir })).apply();
       this.command(player, "game.direction", c);
     };
@@ -132,7 +147,7 @@ export class GameLobby extends Lobby<ILobbyState, IPlayerState> {
 
       this.command(player, "player.ready", state.modify(s => ({ ready: !s.ready })).apply());
 
-      if (!this.isFull || !this.allReady) return;
+      if (/*!this.isFull ||*/ !this.allReady) return;
       gameStart();
     };
 

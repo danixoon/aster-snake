@@ -18,9 +18,6 @@ export const init = (dispatch: ThunkDispatch<IRootState, any, IAction>, username
 
   const server = new EventEmitter();
 
-  server.on("error", error => {
-    console.error(error.error);
-  });
   server.on("player.connected", payload => {
     dispatch({ type: "PLAYER_CONNECTED", payload: { ...payload, playerId: username } });
     dispatch(setPage("connected"));
@@ -66,7 +63,7 @@ export const init = (dispatch: ThunkDispatch<IRootState, any, IAction>, username
   });
 
   server.on("game.pos", payload => {
-    dispatch(setPos(payload.xy));
+    dispatch(setPos(payload));
   });
 
   server.on("game.over", payload => {
@@ -74,5 +71,11 @@ export const init = (dispatch: ThunkDispatch<IRootState, any, IAction>, username
   });
 
   io = SocketIOClient({ query: { username }, transports: ["websocket"], upgrade: false });
-  io.on("command", ({ action, payload }: any) => server.emit(action, payload));
+  io.on("command", (action: string, payload: any) => {
+    if (action === "error") console.error(payload.message, payload.data);
+    else {
+      console.log(action, payload);
+      server.emit(action, payload);
+    }
+  });
 };

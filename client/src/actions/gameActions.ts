@@ -6,7 +6,7 @@ import { io } from "../ws";
 import { setPage } from "./appActions";
 
 export const addScore: () => ThunkAction<any, IRootState, ISocketArgument, IAction> = () => (dispatch, getState) => {
-  io.emit("command", { action: "game.addScore" });
+  io.emit("command", "game.addScore");
 };
 
 export const changeDir: (dir: "up" | "left" | "down" | "right") => ThunkAction<any, IRootState, ISocketArgument, IAction> = dir => (dispatch, getState) => {
@@ -22,7 +22,7 @@ export const changeDir: (dir: "up" | "left" | "down" | "right") => ThunkAction<a
       d = 3;
       break;
   }
-  io.emit("command", { action: "game.direction", payload: { dir: d } });
+  io.emit("command", "game.direction", { dir: d });
 };
 
 export const setPos: (pos: [number, number]) => ThunkAction<any, IRootState, ISocketArgument, IAction> = pos => (dispatch, getState) => {

@@ -8,16 +8,16 @@ import { setPage } from "./appActions";
 export const joinLobby: () => ThunkAction<any, IRootState, ISocketArgument, IAction> = () => (dispatch, getState) => {
   dispatch({ type: "LOBBY_JOIN" });
   dispatch(setPage("loading", "подключаюсь к лобби.."));
-  io.emit("command", { action: "lobby.join" });
+  io.emit("command", "lobby.join");
 };
 
 export const leaveLobby: () => ThunkAction<any, IRootState, ISocketArgument, IAction> = () => (dispatch, getState) => {
   dispatch({ type: "LOBBY_LEAVE" });
   dispatch(setPage("loading", "ливаю из лобби.."));
-  io.emit("command", { action: "lobby.leave" });
+  io.emit("command", "lobby.leave");
 };
 
 export const toggleLobbyReady: () => ThunkAction<any, IRootState, ISocketArgument, IAction> = () => (dispatch, getState) => {
   dispatch({ type: "PLAYER_READY_LOADING" });
-  io.emit("command", { action: "player.ready" });
+  io.emit("command", "player.ready");
 };
