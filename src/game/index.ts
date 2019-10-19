@@ -147,7 +147,7 @@ export class GameLobby extends Lobby<ILobbyState, IPlayerState> {
 
       this.command(player, "player.ready", state.modify(s => ({ ready: !s.ready })).apply());
 
-      if (/*!this.isFull ||*/ !this.allReady) return;
+      if (!this.isFull || !this.allReady) return;
       gameStart();
     };
 
